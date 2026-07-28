@@ -6,6 +6,7 @@
 <title>Rüffel – der Spielzettel</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.0.3/qrcode.min.js" defer></script>
 <style>
   :root{
     --bg: #0E241C;
@@ -45,16 +46,42 @@
     display:flex;
     justify-content:center;
     padding: 32px 16px 60px;
+    position:relative;
+    overflow-x:hidden;
+  }
+  body::before{
+    content:"";
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    background: radial-gradient(ellipse 700px 420px at 50% -5%, rgba(233,198,90,0.14) 0%, transparent 70%);
+    animation: lampFlicker 6s ease-in-out infinite;
+    z-index:0;
+  }
+  @keyframes lampFlicker{
+    0%, 100%{ opacity:0.55; }
+    25%{ opacity:0.85; }
+    50%{ opacity:1; }
+    75%{ opacity:0.75; }
   }
   .sheet{
     width:100%;
     max-width:760px;
     position:relative;
+    z-index:1;
   }
   .back-btn{
     position:absolute;
     top:0;
     left:0;
+    padding:7px 12px;
+    font-size:0.78rem;
+    z-index:2;
+  }
+  .sound-btn{
+    position:absolute;
+    top:0;
+    right:0;
     padding:7px 12px;
     font-size:0.78rem;
     z-index:2;
@@ -71,9 +98,20 @@
     font-size: 3.1rem;
     font-weight:600;
     margin:0;
-    color:var(--primary);
     letter-spacing:-0.5px;
     text-shadow: 0 1px 0 rgba(255,255,255,0.25), 0 2px 3px rgba(0,0,0,0.55);
+    background: linear-gradient(100deg, var(--primary) 35%, var(--primary-hover) 50%, var(--primary) 65%);
+    background-size: 240% 100%;
+    background-position: 200% 0;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    animation: titleShimmer 4.5s ease-in-out 0.3s infinite;
+  }
+  @keyframes titleShimmer{
+    0%{ background-position: 200% 0; }
+    55%, 100%{ background-position: -140% 0; }
   }
   .subtitle{
     font-family:'IBM Plex Mono', monospace;
@@ -114,6 +152,50 @@
     color: var(--primary-text);
     border-color: var(--primary);
   }
+  .stats-toggle{
+    display:block;
+    margin: 0 auto 16px;
+    font-size:0.78rem;
+  }
+  .stats-panel{
+    margin-bottom:16px;
+  }
+  .stats-row{
+    display:flex;
+    justify-content:space-between;
+    padding:6px 0;
+    border-bottom:1px dashed var(--line);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:0.85rem;
+  }
+  .stats-row:last-child{ border-bottom:none; }
+  .stats-sub{
+    color:var(--text-soft);
+    font-size:0.78rem;
+    margin-top:4px;
+  }
+  .achievement-toast{
+    position:fixed;
+    top:20px;
+    left:50%;
+    transform: translateX(-50%) translateY(-20px);
+    background: var(--primary);
+    color: var(--primary-text);
+    font-family:'IBM Plex Sans', sans-serif;
+    font-weight:700;
+    font-size:0.85rem;
+    padding:12px 22px;
+    border-radius:10px;
+    box-shadow: 0 8px 24px var(--shadow);
+    opacity:0;
+    transition: opacity .3s ease, transform .3s ease;
+    z-index:50;
+    pointer-events:none;
+  }
+  .achievement-toast.show{
+    opacity:1;
+    transform: translateX(-50%) translateY(0);
+  }
   .room-code{
     font-family:'Fraunces', serif;
     font-size:2.4rem;
@@ -122,6 +204,23 @@
     color:var(--primary);
     text-align:center;
     margin:10px 0 18px;
+  }
+  .qr-container{
+    display:flex;
+    justify-content:center;
+    margin: 14px 0;
+    padding:14px;
+    background: var(--paper);
+    border-radius:12px;
+    width:fit-content;
+    margin-left:auto;
+    margin-right:auto;
+  }
+  .qr-container img{ display:block; width:180px; height:180px; }
+  .qr-fallback{
+    font-size:0.78rem;
+    color:var(--text-soft);
+    text-align:center;
   }
   .lobby-list{
     margin: 10px 0 16px;
@@ -307,6 +406,22 @@
   .die:active{ transform: translateY(1px); box-shadow: 0 1px 0 var(--line), 0 2px 4px rgba(0,0,0,0.3); }
   .die.disabled{ cursor:default; opacity:0.45; box-shadow: 0 2px 0 var(--line), 0 4px 6px rgba(0,0,0,0.2); }
 
+  .die.drop-in{
+    animation: diceDropIn 0.55s cubic-bezier(.34,1.56,.64,1) backwards;
+  }
+  .die.drop-in:nth-child(1){ animation-delay: 0s; }
+  .die.drop-in:nth-child(2){ animation-delay: 0.05s; }
+  .die.drop-in:nth-child(3){ animation-delay: 0.1s; }
+  .die.drop-in:nth-child(4){ animation-delay: 0.15s; }
+  .die.drop-in:nth-child(5){ animation-delay: 0.2s; }
+  .die.drop-in:nth-child(6){ animation-delay: 0.25s; }
+  .die.drop-in:nth-child(7){ animation-delay: 0.3s; }
+  @keyframes diceDropIn{
+    0%{ transform: translateY(-70px) rotate(-18deg); opacity:0; }
+    65%{ transform: translateY(6px) rotate(5deg); opacity:1; }
+    100%{ transform: translateY(0) rotate(0deg); opacity:1; }
+  }
+
   .die-inner{
     position:relative;
     width:100%; height:100%;
@@ -413,6 +528,8 @@
   .sheet-paper-wrap{
     position:relative;
     margin: 0 auto;
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
   }
   .sheet-paper-wrap::before{
     content:"";
@@ -464,6 +581,42 @@
     justify-content:flex-start;
     gap:10px;
   }
+  .cat-label-group{
+    display:flex;
+    align-items:center;
+    gap:7px;
+  }
+  .rule-info-btn{
+    width:16px; height:16px;
+    min-width:16px;
+    border-radius:50%;
+    border:1px solid var(--ink-soft);
+    background:transparent;
+    color:var(--ink-soft);
+    font-size:0.62rem;
+    font-weight:700;
+    line-height:1;
+    padding:0;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .rule-info-btn:hover{ border-color: var(--primary); color:var(--primary); }
+  .rule-popover{
+    position:fixed;
+    max-width:260px;
+    background: var(--surface-2);
+    color: var(--text);
+    border:1px solid var(--line-strong);
+    border-radius:10px;
+    padding:12px 14px;
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:0.8rem;
+    line-height:1.4;
+    box-shadow: 0 10px 26px var(--shadow);
+    z-index:60;
+  }
   .build-hint{
     display:flex;
     flex-direction:column;
@@ -513,6 +666,15 @@
   }
   td.score-cell.current-col{
     background: rgba(201,162,39,0.10);
+  }
+  td.score-cell.big-win{
+    animation: bigWinFlash 0.95s ease-out;
+    position:relative;
+  }
+  @keyframes bigWinFlash{
+    0%{ box-shadow: inset 0 0 0 rgba(201,162,39,0); background: transparent; }
+    25%{ box-shadow: inset 0 0 16px rgba(201,162,39,0.9); background: rgba(201,162,39,0.28); }
+    100%{ box-shadow: inset 0 0 0 rgba(201,162,39,0); background: transparent; }
   }
   .cell-inner{
     display:flex;
@@ -607,8 +769,32 @@
     font-size:0.95rem;
     margin: 16px 0 22px;
   }
-  .final-list div{ padding:5px 0; }
-  .final-list .win{ color:var(--green); font-weight:700; }
+  .final-list div{
+    padding:5px 0;
+    opacity:0;
+    animation: rowReveal 0.45s ease forwards;
+  }
+  .final-list div:nth-child(1){ animation-delay: 0.1s; }
+  .final-list div:nth-child(2){ animation-delay: 0.28s; }
+  .final-list div:nth-child(3){ animation-delay: 0.46s; }
+  .final-list div:nth-child(4){ animation-delay: 0.64s; }
+  .final-list div:nth-child(5){ animation-delay: 0.82s; }
+  .final-list div:nth-child(6){ animation-delay: 1.0s; }
+  .final-list div:nth-child(7){ animation-delay: 1.18s; }
+  .final-list div:nth-child(8){ animation-delay: 1.36s; }
+  @keyframes rowReveal{
+    from{ opacity:0; transform: translateX(-16px); }
+    to{ opacity:1; transform: translateX(0); }
+  }
+  .final-list .win{
+    color:var(--green);
+    font-weight:700;
+    animation: rowReveal 0.45s ease forwards, winnerGlow 1.6s ease-in-out 1s infinite;
+  }
+  @keyframes winnerGlow{
+    0%, 100%{ text-shadow: 0 0 0 transparent; }
+    50%{ text-shadow: 0 0 12px rgba(58,166,121,0.75); }
+  }
 
   footer.note{
     text-align:center;
@@ -618,15 +804,40 @@
   }
 
   @media (max-width:480px){
+    body{ padding: 20px 10px 40px; }
     h1{ font-size:2rem; }
-    .die{ width:38px;height:38px; }
+    .back-btn, .sound-btn{
+      font-size:0.68rem;
+      padding:5px 8px;
+    }
+    header.title-block{ padding-top:26px; }
+    .setup-card{ padding:16px 14px; }
+    .mode-tab{ font-size:0.74rem; padding:7px 10px; }
+    .room-code{ font-size:1.7rem; letter-spacing:4px; }
+    .dice-tray{ gap:6px; }
+    .die{ width:36px;height:36px; }
+    .roll-counter{ gap:6px; }
     table.scoresheet{ font-size:0.68rem; }
+    table.scoresheet .cat-name{ padding-left:8px; gap:6px; }
+    .rule-info-btn{ width:14px; height:14px; min-width:14px; font-size:0.56rem; }
+    .hint-dot{ width:5px; height:5px; }
+    .build-hint{ gap:2px; }
+    .rule-popover{ max-width: calc(100vw - 30px); font-size:0.78rem; }
+    .achievement-toast{ max-width: calc(100vw - 30px); font-size:0.78rem; padding:10px 16px; }
+    .final-list{ font-size:0.85rem; }
+    .col-player-name{ font-size:0.82rem; }
+  }
+  @media (max-width:340px){
+    .die{ width:30px;height:30px; }
+    h1{ font-size:1.7rem; }
   }
 </style>
 </head>
 <body>
 <div class="sheet">
   <button class="btn-ghost back-btn" id="backToMenuBtn" type="button" style="display:none;">← Menü</button>
+  <button class="btn-ghost sound-btn" id="soundToggleBtn" type="button" title="Ton an/aus">Ton: An</button>
+  <div class="rule-popover" id="rulePopover" style="display:none;"></div>
   <header class="title-block">
     <h1>Rüffel</h1>
     <div class="subtitle">der Spielzettel · Hotseat-Runde · 7 Würfel</div>
@@ -637,6 +848,12 @@
       <button class="mode-tab active" data-mode="hotseat" type="button">Ein Gerät</button>
       <button class="mode-tab" data-mode="create" type="button">Raum erstellen</button>
       <button class="mode-tab" data-mode="join" type="button">Raum beitreten</button>
+    </div>
+
+    <button class="btn-ghost stats-toggle" id="statsToggleBtn" type="button">Statistik anzeigen</button>
+    <div class="setup-card stats-panel" id="statsPanel" style="display:none;">
+      <h2>Deine Statistik</h2>
+      <div id="statsContent"></div>
     </div>
 
     <div class="setup-card" id="hotseatPanel">
@@ -680,6 +897,8 @@
       <h2>Warteraum</h2>
       <div class="hint">Raum-Code zum Teilen:</div>
       <div class="room-code" id="roomCodeDisplay"></div>
+      <button class="btn-ghost" id="showQrBtn" type="button">QR-Code zum Scannen anzeigen</button>
+      <div id="qrCodeContainer" class="qr-container" style="display:none;"></div>
       <div id="lobbyPlayerList" class="lobby-list"></div>
       <div class="row-actions" id="hostControls" style="display:none;">
         <div style="display:flex; align-items:center; gap:8px;">
@@ -770,6 +989,35 @@
   ];
   const ALL_KEYS = UPPER.map(c=>c.key).concat(LOWER.map(c=>c.key));
 
+  const RULE_EXPLANATIONS = {
+    einser: 'Zählt nur die Augenzahl 1. Beispiel: drei Einser = 3 Punkte.',
+    zweier: 'Zählt nur die Augenzahl 2. Beispiel: drei Zweier = 6 Punkte.',
+    dreier: 'Zählt nur die Augenzahl 3. Beispiel: drei Dreier = 9 Punkte.',
+    vierer: 'Zählt nur die Augenzahl 4. Beispiel: drei Vierer = 12 Punkte.',
+    fuenfer: 'Zählt nur die Augenzahl 5. Beispiel: drei Fünfer = 15 Punkte.',
+    sechser: 'Zählt nur die Augenzahl 6. Beispiel: drei Sechser = 18 Punkte.',
+    dreierpasch: 'Mindestens 3 gleiche Würfel. Zählt die Summe aller 7 Würfel.',
+    viererpasch: 'Mindestens 4 gleiche Würfel. Zählt die Summe aller 7 Würfel.',
+    fuenferpasch: 'Mindestens 5 gleiche Würfel. Zählt die Summe aller 7 Würfel.',
+    sechserpasch: 'Mindestens 6 gleiche Würfel. Zählt die Summe aller 7 Würfel.',
+    dreiundvier: '3 gleiche + 4 gleiche (zwei verschiedene Zahlen). Feste 30 Punkte.',
+    sechsundeins: '6 gleiche Würfel + 1 andere Zahl. Feste 55 Punkte.',
+    fuenfundzwei: '5 gleiche + 2 gleiche (zwei verschiedene Zahlen). Feste 45 Punkte.',
+    rueffel: 'Alle 7 Würfel zeigen die gleiche Zahl. Feste 100 Punkte.',
+    ganzkleinestrasse: '3 aufeinanderfolgende Zahlen vorhanden (z.B. 3-4-5). Feste 25 Punkte.',
+    kleinestrasse: '4 aufeinanderfolgende Zahlen vorhanden. Feste 35 Punkte.',
+    grossestrasse: '5 aufeinanderfolgende Zahlen vorhanden. Feste 50 Punkte.',
+    allee: 'Alle Zahlen 1 bis 6 mindestens einmal vorhanden. Feste 75 Punkte.',
+    ecke: '4er-Lauf, ein Ende einmal, die anderen drei Zahlen je zweimal (z.B. 1-2-2-3-3-4-4). Feste 60 Punkte.',
+    kleineecke: '3er-Lauf, alle drei Zahlen mindestens zweimal, 1 Würfel frei (z.B. 1-1-2-2-3-3-x). Feste 30 Punkte.',
+    villa: '3 gleiche + 2 gleiche + 2 gleiche (drei verschiedene Zahlen). Feste 45 Punkte.',
+    mehrfamilienhaus: '2 gleiche + 2 gleiche + 2 gleiche + 1 andere Zahl. Feste 40 Punkte.',
+    bungalow: '3 gleiche + 3 gleiche + 1 andere Zahl. Feste 50 Punkte.',
+    chance1: 'Zählt die Summe aller 7 Würfel, ohne Bedingung.',
+    chance2: 'Zählt die Summe aller 7 Würfel minus 10 (mindestens 0).',
+    chance3: 'Zählt die Summe aller 7 Würfel minus 15 (mindestens 0).'
+  };
+
   function counts(dice){
     const c = {1:0,2:0,3:0,4:0,5:0,6:0};
     dice.forEach(d=> c[d]++ );
@@ -841,6 +1089,111 @@
     }
   }
 
+  // ---------- Sound effects (synthesized, no audio files needed) ----------
+  const SoundFX = (function(){
+    let ctx = null;
+    let muted = false;
+    try { muted = localStorage.getItem('rueffel_muted') === '1'; } catch(e){}
+
+    function getCtx(){
+      try{
+        if(!ctx){
+          const AC = window.AudioContext || window.webkitAudioContext;
+          if(!AC) return null;
+          ctx = new AC();
+        }
+        if(ctx.state === 'suspended'){ ctx.resume().catch(()=>{}); }
+        return ctx;
+      } catch(e){ return null; }
+    }
+
+    function envGain(c, startTime, duration, peak){
+      const g = c.createGain();
+      g.gain.setValueAtTime(0.0001, startTime);
+      g.gain.linearRampToValueAtTime(peak, startTime + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+      return g;
+    }
+
+    function playRoll(){
+      if(muted) return;
+      try{
+        const c = getCtx();
+        if(!c) return;
+        const now = c.currentTime;
+        const clickCount = 9;
+        for(let i=0;i<clickCount;i++){
+          const t = now + i*0.045 + Math.random()*0.012;
+          const bufferSize = Math.max(1, Math.floor(c.sampleRate * 0.03));
+          const buffer = c.createBuffer(1, bufferSize, c.sampleRate);
+          const data = buffer.getChannelData(0);
+          for(let j=0;j<bufferSize;j++){ data[j] = (Math.random()*2-1) * Math.pow(1 - j/bufferSize, 1.5); }
+          const noise = c.createBufferSource();
+          noise.buffer = buffer;
+          const filter = c.createBiquadFilter();
+          filter.type = 'bandpass';
+          filter.frequency.value = 900 + Math.random()*1400;
+          filter.Q.value = 1.2;
+          const peak = 0.16 + Math.random()*0.12;
+          const gain = envGain(c, t, 0.045, peak);
+          noise.connect(filter).connect(gain).connect(c.destination);
+          noise.start(t);
+        }
+        // soft landing "thud" once the dice settle
+        const thudTime = now + clickCount*0.045 + 0.05;
+        const thudOsc = c.createOscillator();
+        thudOsc.type = 'sine';
+        thudOsc.frequency.setValueAtTime(180, thudTime);
+        thudOsc.frequency.exponentialRampToValueAtTime(70, thudTime + 0.12);
+        const thudGain = envGain(c, thudTime, 0.16, 0.22);
+        thudOsc.connect(thudGain).connect(c.destination);
+        thudOsc.start(thudTime); thudOsc.stop(thudTime + 0.2);
+      } catch(e){ /* audio not available - ignore silently */ }
+    }
+
+    function playScore(){
+      if(muted) return;
+      try{
+        const c = getCtx();
+        if(!c) return;
+        const now = c.currentTime;
+        const osc = c.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, now);
+        osc.frequency.exponentialRampToValueAtTime(1320, now + 0.12);
+        const gain = envGain(c, now, 0.28, 0.28);
+        osc.connect(gain).connect(c.destination);
+        osc.start(now); osc.stop(now + 0.32);
+      } catch(e){}
+    }
+
+    function playWin(){
+      if(muted) return;
+      try{
+        const c = getCtx();
+        if(!c) return;
+        const now = c.currentTime;
+        [523.25, 659.25, 783.99, 1046.5].forEach((freq, i)=>{
+          const t = now + i*0.15;
+          const osc = c.createOscillator();
+          osc.type = 'triangle';
+          osc.frequency.value = freq;
+          const gain = envGain(c, t, 0.32, 0.24);
+          osc.connect(gain).connect(c.destination);
+          osc.start(t); osc.stop(t + 0.38);
+        });
+      } catch(e){}
+    }
+
+    function setMuted(m){
+      muted = m;
+      try{ localStorage.setItem('rueffel_muted', m ? '1' : '0'); } catch(e){}
+    }
+    function isMuted(){ return muted; }
+
+    return { playRoll, playScore, playWin, setMuted, isMuted };
+  })();
+
   // ---------- State ----------
   let players = []; // {name, scores:{key:null|number}}
   let currentPlayerIndex = 0;
@@ -895,6 +1248,147 @@
   const addPlayerBtn = document.getElementById('addPlayerBtn');
   const startBtn = document.getElementById('startBtn');
   const backToMenuBtn = document.getElementById('backToMenuBtn');
+  const soundToggleBtn = document.getElementById('soundToggleBtn');
+
+  function updateSoundButtonLabel(){
+    soundToggleBtn.textContent = SoundFX.isMuted() ? 'Ton: Aus' : 'Ton: An';
+  }
+  updateSoundButtonLabel();
+  soundToggleBtn.addEventListener('click', ()=>{
+    SoundFX.setMuted(!SoundFX.isMuted());
+    updateSoundButtonLabel();
+  });
+
+  // ---------- Statistics ----------
+  const statsToggleBtn = document.getElementById('statsToggleBtn');
+  const statsPanel = document.getElementById('statsPanel');
+  const statsContent = document.getElementById('statsContent');
+
+  function loadStats(){
+    try{
+      const raw = localStorage.getItem('rueffel_stats');
+      if(raw) return JSON.parse(raw);
+    } catch(e){}
+    return { gamesPlayed:0, wins:0, bestScore:0, vsBot:{ easy:{played:0,won:0}, medium:{played:0,won:0}, hard:{played:0,won:0} } };
+  }
+  function saveStats(stats){
+    try{ localStorage.setItem('rueffel_stats', JSON.stringify(stats)); } catch(e){}
+  }
+  function findMyStatsPlayer(){
+    if(onlineMode){
+      return players.find(p => p.clientId === myClientId) || null;
+    }
+    return players.find(p => !p.isBot) || null;
+  }
+
+  function renderStatsPanel(){
+    const stats = loadStats();
+    const winRate = stats.gamesPlayed > 0 ? Math.round((stats.wins / stats.gamesPlayed) * 100) : 0;
+    const diffLabel = {easy:'Leicht', medium:'Mittel', hard:'Schwer'};
+    let html = '';
+    html += `<div class="stats-row"><span>Gespielte Partien</span><span>${stats.gamesPlayed}</span></div>`;
+    html += `<div class="stats-row"><span>Siege</span><span>${stats.wins} (${winRate}%)</span></div>`;
+    html += `<div class="stats-row"><span>Beste Gesamtpunktzahl</span><span>${stats.bestScore}</span></div>`;
+    ['easy','medium','hard'].forEach(d=>{
+      const v = stats.vsBot[d] || {played:0,won:0};
+      if(v.played > 0){
+        html += `<div class="stats-row"><span>Gegen Bot (${diffLabel[d]})</span><span>${v.won}/${v.played} Siege</span></div>`;
+      }
+    });
+    if(stats.gamesPlayed === 0){
+      html += `<div class="stats-sub">Noch keine Partie gespielt – die Statistik füllt sich, sobald du ein Spiel beendest.</div>`;
+    }
+    statsContent.innerHTML = html;
+  }
+  renderStatsPanel();
+
+  statsToggleBtn.addEventListener('click', ()=>{
+    const showing = statsPanel.style.display !== 'none';
+    statsPanel.style.display = showing ? 'none' : 'block';
+    statsToggleBtn.textContent = showing ? 'Statistik anzeigen' : 'Statistik verbergen';
+    if(!showing) renderStatsPanel();
+  });
+
+  function recordGameStats(){
+    const me = findMyStatsPlayer();
+    if(!me) return;
+    const scored = players.map(p => ({ p, total: totalScore(p) }));
+    scored.sort((a,b) => b.total - a.total);
+    const myEntry = scored.find(s => s.p === me);
+    if(!myEntry) return;
+    const won = scored[0].p === me;
+    const stats = loadStats();
+    stats.gamesPlayed++;
+    if(won) stats.wins++;
+    if(myEntry.total > stats.bestScore) stats.bestScore = myEntry.total;
+    const bots = players.filter(p => p.isBot);
+    if(bots.length > 0){
+      const rank = { easy:1, medium:2, hard:3 };
+      let hardest = bots[0].difficulty || 'medium';
+      bots.forEach(b=>{
+        const d = b.difficulty || 'medium';
+        if((rank[d]||2) > (rank[hardest]||2)) hardest = d;
+      });
+      if(stats.vsBot[hardest]){
+        stats.vsBot[hardest].played++;
+        if(won) stats.vsBot[hardest].won++;
+      }
+    }
+    saveStats(stats);
+    renderStatsPanel();
+  }
+
+  // ---------- Achievements ----------
+  function loadAchievements(){
+    try{
+      const raw = localStorage.getItem('rueffel_achievements');
+      if(raw) return JSON.parse(raw);
+    } catch(e){}
+    return {};
+  }
+  function saveAchievements(a){
+    try{ localStorage.setItem('rueffel_achievements', JSON.stringify(a)); } catch(e){}
+  }
+  function unlockAchievement(id, title){
+    const a = loadAchievements();
+    if(a[id]) return;
+    a[id] = true;
+    saveAchievements(a);
+    showAchievementToast(title);
+  }
+  function showAchievementToast(title){
+    const toast = document.createElement('div');
+    toast.className = 'achievement-toast';
+    toast.textContent = 'Erfolg freigeschaltet: ' + title;
+    document.body.appendChild(toast);
+    setTimeout(()=>{ toast.classList.add('show'); }, 20);
+    setTimeout(()=>{ toast.classList.remove('show'); }, 3200);
+    setTimeout(()=>{ toast.remove(); }, 3700);
+  }
+  function checkAchievements(){
+    const me = findMyStatsPlayer();
+    if(!me) return;
+    if(me.scores.rueffel === 100){
+      unlockAchievement('first_rueffel', 'Erster Rüffel!');
+    }
+    if(me.scores.allee === 75){
+      unlockAchievement('first_allee', 'Erste Allee!');
+    }
+    if(me.scores.sechsundeins === 55){
+      unlockAchievement('first_sechsundeins', '6 Gleiche und 1 geschafft!');
+    }
+    const scored = players.map(p => ({ p, total: totalScore(p) })).sort((a,b)=>b.total-a.total);
+    const won = scored.length > 0 && scored[0].p === me;
+    if(won){
+      const beatHard = players.some(p => p.isBot && (p.difficulty||'medium') === 'hard');
+      if(beatHard){
+        unlockAchievement('beat_hard_bot', 'Sieg gegen einen Schwer-Bot!');
+      }
+      if(scored[0].total >= 300){
+        unlockAchievement('score_300', '300+ Punkte in einer Partie!');
+      }
+    }
+  }
 
   function addPlayerRow(defaultName, isBot, difficulty){
     const row = document.createElement('div');
@@ -961,6 +1455,7 @@
     currentPlayerIndex = 0;
     history = [];
     gameActive = true;
+    gameOverAnnounced = false;
     document.getElementById('setup').style.display = 'none';
     document.getElementById('game').style.display = 'block';
     backToMenuBtn.style.display = 'inline-block';
@@ -983,6 +1478,43 @@
   const guestWaitHint = document.getElementById('guestWaitHint');
   const addBotLobbyBtn = document.getElementById('addBotLobbyBtn');
   const startOnlineGameBtn = document.getElementById('startOnlineGameBtn');
+  const showQrBtn = document.getElementById('showQrBtn');
+  const qrCodeContainer = document.getElementById('qrCodeContainer');
+  let qrRenderedForCode = null;
+
+  function buildJoinUrl(code){
+    return location.origin + location.pathname + '?room=' + encodeURIComponent(code);
+  }
+
+  function renderQrCode(code){
+    if(qrRenderedForCode === code) return;
+    qrCodeContainer.innerHTML = '';
+    try{
+      if(typeof qrcode !== 'function'){
+        qrCodeContainer.innerHTML = '<div class="qr-fallback">QR-Code konnte nicht geladen werden – nutze den Code oben.</div>';
+        return;
+      }
+      const qr = qrcode(0, 'M');
+      qr.addData(buildJoinUrl(code));
+      qr.make();
+      qrCodeContainer.innerHTML = qr.createImgTag(5, 8);
+      qrRenderedForCode = code;
+    } catch(e){
+      qrCodeContainer.innerHTML = '<div class="qr-fallback">QR-Code konnte nicht erzeugt werden – nutze den Code oben.</div>';
+    }
+  }
+
+  showQrBtn.addEventListener('click', ()=>{
+    const showing = qrCodeContainer.style.display !== 'none';
+    if(showing){
+      qrCodeContainer.style.display = 'none';
+      showQrBtn.textContent = 'QR-Code zum Scannen anzeigen';
+    } else {
+      renderQrCode(roomCode);
+      qrCodeContainer.style.display = 'flex';
+      showQrBtn.textContent = 'QR-Code ausblenden';
+    }
+  });
 
   function pushRoomState(patch){
     if(!onlineMode || !roomCode || !window.RueffelSync) return;
@@ -994,7 +1526,14 @@
   function subscribeToRoom(code){
     if(unsubscribeRoom){ unsubscribeRoom(); unsubscribeRoom = null; }
     unsubscribeRoom = window.RueffelSync.subscribeRoom(code, (room)=>{
-      if(!room) return;
+      if(!room){
+        // Room no longer exists (e.g. deleted, or a stale reconnect attempt) - clean up quietly.
+        forgetActiveRoom();
+        if(unsubscribeRoom){ unsubscribeRoom(); unsubscribeRoom = null; }
+        onlineMode = false;
+        roomCode = null;
+        return;
+      }
       onRoomUpdate(room);
     });
   }
@@ -1077,6 +1616,7 @@
       const code = await window.RueffelSync.createRoom({
         hostId: myClientId,
         status: 'lobby',
+        createdAt: Date.now(),
         players: initialPlayers,
         currentPlayerIndex: 0,
         dice: new Array(NUM_DICE).fill(1),
@@ -1088,6 +1628,11 @@
       hostId = myClientId;
       onlineMode = true;
       players = initialPlayers;
+      qrRenderedForCode = null;
+      qrCodeContainer.style.display = 'none';
+      qrCodeContainer.innerHTML = '';
+      showQrBtn.textContent = 'QR-Code zum Scannen anzeigen';
+      rememberActiveRoom(code);
       subscribeToRoom(code);
     } catch(err){
       createHint.textContent = 'Fehler: ' + err.message;
@@ -1110,6 +1655,11 @@
       roomCode = code;
       hostId = result.hostId;
       onlineMode = true;
+      qrRenderedForCode = null;
+      qrCodeContainer.style.display = 'none';
+      qrCodeContainer.innerHTML = '';
+      showQrBtn.textContent = 'QR-Code zum Scannen anzeigen';
+      rememberActiveRoom(code);
       subscribeToRoom(code);
     } catch(err){
       joinHint.textContent = 'Fehler: ' + err.message;
@@ -1132,6 +1682,7 @@
     currentPlayerIndex = 0;
     history = [];
     gameActive = true;
+    gameOverAnnounced = false;
     lobbySection.style.display = 'none';
     document.getElementById('game').style.display = 'block';
     buildSheet();
@@ -1174,12 +1725,12 @@
     return html;
   }
 
-  function renderDice(){
+  function renderDice(dropIn){
     diceTray.innerHTML = '';
     const interactive = hasRolledThisTurn && (!onlineMode || isMyTurnOnline());
     dice.forEach((val, i)=>{
       const d = document.createElement('div');
-      d.className = 'die' + (held[i] ? ' held' : '') + (interactive ? '' : ' disabled');
+      d.className = 'die' + (held[i] ? ' held' : '') + (interactive ? '' : ' disabled') + (dropIn ? ' drop-in' : '');
       d.innerHTML = `<div class="die-inner">` +
         `<div class="die-face">${buildPipGridHTML(val)}</div>` +
         `<div class="die-cube">` +
@@ -1212,6 +1763,7 @@
 
   function performRoll(){
     if(rollsLeft <= 0) return;
+    SoundFX.playRoll();
     dice = dice.map((v,i)=> held[i] ? v : (1 + Math.floor(Math.random()*6)) );
     sortDiceAndHeld();
     rollsLeft -= 1;
@@ -1258,6 +1810,50 @@
   // ---------- Score sheet ----------
   const headRow = document.getElementById('headRow');
   const sheetBody = document.getElementById('sheetBody');
+  const rulePopover = document.getElementById('rulePopover');
+
+  function hideRulePopover(){
+    rulePopover.style.display = 'none';
+  }
+  function showRulePopover(btn){
+    const key = btn.getAttribute('data-rule-key');
+    const explanation = RULE_EXPLANATIONS[key];
+    if(!explanation) return;
+    rulePopover.textContent = explanation;
+    rulePopover.style.display = 'block';
+    const rect = btn.getBoundingClientRect();
+    const popRect = rulePopover.getBoundingClientRect();
+    let left = rect.left;
+    let top = rect.bottom + 8;
+    if(left + popRect.width > window.innerWidth - 10){
+      left = window.innerWidth - popRect.width - 10;
+    }
+    if(top + popRect.height > window.innerHeight - 10){
+      top = rect.top - popRect.height - 8;
+    }
+    rulePopover.style.left = Math.max(10, left) + 'px';
+    rulePopover.style.top = Math.max(10, top) + 'px';
+  }
+  document.addEventListener('click', (e)=>{
+    const btn = e.target.closest('.rule-info-btn');
+    if(btn){
+      e.stopPropagation();
+      const alreadyOpenForThis = rulePopover.style.display !== 'none' && rulePopover.getAttribute('data-open-for') === btn.getAttribute('data-rule-key');
+      if(alreadyOpenForThis){
+        hideRulePopover();
+      } else {
+        showRulePopover(btn);
+        rulePopover.setAttribute('data-open-for', btn.getAttribute('data-rule-key'));
+      }
+      return;
+    }
+    if(!e.target.closest('.rule-popover')){
+      hideRulePopover();
+    }
+  });
+  document.addEventListener('keydown', (e)=>{
+    if(e.key === 'Escape') hideRulePopover();
+  });
 
   function buildSheet(){
     headRow.innerHTML = '<th class="cat-name">Kategorie</th>' +
@@ -1307,7 +1903,13 @@
       ? `<div class="build-hint">${groups.map(g=>`<div class="hint-group">${'<span class="hint-dot"></span>'.repeat(g)}</div>`).join('')}</div>`
       : '';
     return `<tr>
-      <td class="cat-name"><span class="cat-label">${label}</span>${groupHint}</td>
+      <td class="cat-name">
+        <span class="cat-label-group">
+          <button type="button" class="rule-info-btn" data-rule-key="${key}" aria-label="Regel erklären">?</button>
+          <span class="cat-label">${label}</span>
+        </span>
+        ${groupHint}
+      </td>
       ${players.map((p,pi)=>`<td class="score-cell" data-key="${key}" data-player="${pi}"></td>`).join('')}
     </tr>`;
   }
@@ -1333,7 +1935,20 @@
     }
     const value = forceZero ? 0 : scoreFor(key, dice);
     player.scores[key] = value;
+    if(!player.isBot){
+      SoundFX.playScore();
+    }
     nextTurnOrEnd();
+    if(value >= 50){
+      celebrateBigScore(key, playerIndex);
+    }
+  }
+
+  function celebrateBigScore(key, playerIndex){
+    const cell = sheetBody.querySelector(`td[data-key="${key}"][data-player="${playerIndex}"]`);
+    if(!cell) return;
+    cell.classList.add('big-win');
+    setTimeout(()=>cell.classList.remove('big-win'), 950);
   }
 
   function upperSum(player){
@@ -1444,7 +2059,7 @@
     const round = Math.min(filledCount + 1, ALL_KEYS.length);
     roundInfoEl.textContent = `Runde ${round} von ${ALL_KEYS.length}`;
     updateRollUI();
-    renderDice();
+    renderDice(true);
     renderSheetValues();
     updateUndoButton();
     if(onlineMode){
@@ -1478,7 +2093,7 @@
     const round = Math.min(filledCount + 1, ALL_KEYS.length);
     roundInfoEl.textContent = `Runde ${round} von ${ALL_KEYS.length}`;
     updateRollUI();
-    renderDice();
+    renderDice(rollsLeft === 3 && !hasRolledThisTurn);
     renderSheetValues();
     updateUndoButton();
     maybeKickOffBot();
@@ -1524,6 +2139,7 @@
     document.getElementById('gameover').style.display = 'none';
     document.getElementById('game').style.display = 'block';
     gameActive = true;
+    gameOverAnnounced = false;
 
     const player = players[currentPlayerIndex];
     setCurrentPlayerName(player.name + (player.isBot ? ' (Bot)' : ''));
@@ -1531,7 +2147,7 @@
     const round = Math.min(filledCount + 1, ALL_KEYS.length);
     roundInfoEl.textContent = `Runde ${round} von ${ALL_KEYS.length}`;
     updateRollUI();
-    renderDice();
+    renderDice(rollsLeft === 3 && !hasRolledThisTurn);
     renderSheetValues();
     updateUndoButton();
     if(onlineMode){
@@ -1689,6 +2305,8 @@
     startTurn();
   }
 
+  let gameOverAnnounced = false;
+
   function showGameOver(){
     gameActive = false;
     document.getElementById('game').style.display = 'none';
@@ -1700,7 +2318,13 @@
     finalList.innerHTML = ranked.map((p,i)=>
       `<div class="${i===0?'win':''}">${i+1}. ${escapeHtml(p.name)} — ${p.total} Punkte${i===0?' – Gewinner':''}</div>`
     ).join('');
-    fireConfetti();
+    if(!gameOverAnnounced){
+      gameOverAnnounced = true;
+      fireConfetti();
+      SoundFX.playWin();
+      recordGameStats(ranked);
+      checkAchievements(ranked);
+    }
   }
 
   function fireConfetti(){
@@ -1725,6 +2349,10 @@
       const ok = confirm('Zum Menü zurückkehren? Der aktuelle Spielstand geht verloren.');
       if(!ok) return;
     }
+    if(onlineMode && roomCode && iAmHost() && window.RueffelSync && window.RueffelSync.deleteRoom){
+      window.RueffelSync.deleteRoom(roomCode).catch(()=>{});
+    }
+    forgetActiveRoom();
     gameActive = false;
     if(unsubscribeRoom){ unsubscribeRoom(); unsubscribeRoom = null; }
     onlineMode = false;
@@ -1757,12 +2385,55 @@
 
   document.getElementById('restartBtn').addEventListener('click', goToMenu);
 
+  // ---------- Reconnect after reload / join via shared link ----------
+  function rememberActiveRoom(code){
+    try{ localStorage.setItem('rueffel_active_room', JSON.stringify({ code, ts: Date.now() })); } catch(e){}
+  }
+  function forgetActiveRoom(){
+    try{ localStorage.removeItem('rueffel_active_room'); } catch(e){}
+  }
+  function attemptReconnect(){
+    let stored = null;
+    try{
+      const raw = localStorage.getItem('rueffel_active_room');
+      if(raw) stored = JSON.parse(raw);
+    } catch(e){}
+    if(!stored || !stored.code) return false;
+    const MAX_AGE = 12 * 60 * 60 * 1000; // 12 hours
+    if(!stored.ts || Date.now() - stored.ts > MAX_AGE){
+      forgetActiveRoom();
+      return false;
+    }
+    onlineMode = true;
+    roomCode = stored.code;
+    subscribeToRoom(stored.code);
+    return true;
+  }
+  function applyJoinLinkParam(){
+    try{
+      const params = new URLSearchParams(location.search);
+      const roomParam = params.get('room');
+      if(!roomParam) return;
+      modeTabs.querySelectorAll('.mode-tab').forEach(t=>t.classList.remove('active'));
+      modeTabs.querySelector('[data-mode="join"]').classList.add('active');
+      hotseatPanel.style.display = 'none';
+      createPanel.style.display = 'none';
+      joinPanel.style.display = 'block';
+      joinCodeInput.value = roomParam.toUpperCase();
+    } catch(e){}
+  }
+
+  const reconnected = attemptReconnect();
+  if(!reconnected){
+    applyJoinLinkParam();
+  }
+
 })();
 </script>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
-  import { getDatabase, ref, get, update, onValue, off, runTransaction } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
+  import { getDatabase, ref, get, update, remove, onValue, off, runTransaction } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyBEaEYhet_s8GG7d5LfkBmXL3f9zLbGY4g",
@@ -1813,6 +2484,10 @@
 
     async updateRoom(code, patch){
       await update(ref(db, 'rooms/' + code), patch);
+    },
+
+    async deleteRoom(code){
+      await remove(ref(db, 'rooms/' + code));
     },
 
     subscribeRoom(code, callback){
