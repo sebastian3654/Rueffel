@@ -1,0 +1,1503 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rüffel – der Spielzettel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #14161C;
+    --surface: #1D202A;
+    --surface-2: #252936;
+    --text: #EDEFF4;
+    --text-soft: #8890A3;
+    --line: #2C303C;
+    --line-strong: #3B4152;
+    --primary: #7C6BF0;
+    --primary-hover: #8F80F5;
+    --primary-text: #0F1016;
+    --teal: #35C7C2;
+    --coral: #FF7A66;
+    --green: #3DDC84;
+    --green-bg: rgba(61,220,132,0.12);
+    --shadow: rgba(0,0,0,0.5);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    min-height:100vh;
+    background: var(--bg);
+    color:var(--text);
+    font-family:'IBM Plex Sans', sans-serif;
+    display:flex;
+    justify-content:center;
+    padding: 32px 16px 60px;
+  }
+  .sheet{
+    width:100%;
+    max-width:760px;
+    position:relative;
+  }
+  .back-btn{
+    position:absolute;
+    top:0;
+    left:0;
+    padding:7px 12px;
+    font-size:0.78rem;
+    z-index:2;
+  }
+  header.title-block{
+    text-align:center;
+    padding: 4px 0 22px;
+    margin-bottom: 22px;
+    border-bottom: 1px solid var(--line);
+  }
+  h1{
+    font-family:'Space Grotesk', sans-serif;
+    font-size: 2.6rem;
+    font-weight:700;
+    margin:0;
+    color:var(--primary);
+    letter-spacing:-0.5px;
+  }
+  .subtitle{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:0.78rem;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+    color:var(--text-soft);
+    margin-top:6px;
+  }
+
+  .setup-card{
+    background: var(--surface);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding: 24px 22px;
+    box-shadow: 0 8px 24px var(--shadow);
+  }
+  .mode-tabs{
+    display:flex;
+    gap:8px;
+    margin-bottom:16px;
+    flex-wrap:wrap;
+  }
+  .mode-tab{
+    background: var(--surface);
+    border:1px solid var(--line);
+    color:var(--text-soft);
+    padding:9px 14px;
+    border-radius:8px;
+    font-size:0.82rem;
+    font-family:'IBM Plex Sans', sans-serif;
+    font-weight:600;
+    cursor:pointer;
+  }
+  .mode-tab:hover{ border-color: var(--line-strong); }
+  .mode-tab.active{
+    background: var(--primary);
+    color: var(--primary-text);
+    border-color: var(--primary);
+  }
+  .room-code{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:2.4rem;
+    font-weight:700;
+    letter-spacing:6px;
+    color:var(--primary);
+    text-align:center;
+    margin:10px 0 18px;
+  }
+  .lobby-list{
+    margin: 10px 0 16px;
+  }
+  .lobby-list .lobby-player{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:10px 12px;
+    background: var(--surface-2);
+    border:1px solid var(--line);
+    border-radius:8px;
+    margin-bottom:8px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:0.9rem;
+  }
+  .lobby-list .lobby-player .tag{
+    color:var(--text-soft);
+    font-size:0.75rem;
+  }
+  .setup-card h2{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:1rem;
+    letter-spacing:0.3px;
+    margin:0 0 16px;
+    color:var(--text);
+    font-weight:600;
+  }
+  .player-row, .field-row{
+    display:flex;
+    gap:10px;
+    margin-bottom:10px;
+    align-items:center;
+  }
+  .player-row input, .field-row input{
+    flex:1;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:0.95rem;
+    padding:10px 12px;
+    background: var(--surface-2);
+    border:1px solid var(--line);
+    border-radius:8px;
+    color:var(--text);
+    outline:none;
+  }
+  .player-row input:focus, .field-row input:focus{ border-color: var(--primary); }
+  .player-row .num{
+    font-family:'IBM Plex Mono', monospace;
+    color:var(--text-soft);
+    width:20px;
+    font-size:0.9rem;
+  }
+  .remove-btn{
+    background:none;border:none;color:var(--coral);
+    font-size:1.05rem; cursor:pointer; padding:4px 8px;
+  }
+  .remove-btn:hover{ opacity:0.75; }
+  .bot-toggle-label{
+    display:flex;
+    align-items:center;
+    gap:3px;
+    font-size:1.05rem;
+    color:var(--text-soft);
+    cursor:pointer;
+    user-select:none;
+    white-space:nowrap;
+  }
+  .bot-toggle-label input[type="checkbox"]{
+    accent-color: var(--primary);
+    cursor:pointer;
+    width:15px;
+    height:15px;
+  }
+  .row-actions{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-top:16px;
+    flex-wrap:wrap;
+    gap:10px;
+  }
+
+  button{
+    cursor:pointer;
+    font-family:'IBM Plex Sans', sans-serif;
+    font-weight:600;
+    border:none;
+  }
+  button:focus-visible, td[tabindex]:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+  .btn-ghost{
+    background:transparent;
+    color:var(--text);
+    border:1px solid var(--line-strong);
+    padding:9px 16px;
+    border-radius:8px;
+    font-size:0.85rem;
+  }
+  .btn-ghost:hover{ border-color: var(--primary); color:var(--primary); }
+
+  .btn-primary{
+    background: var(--primary);
+    color: var(--primary-text);
+    padding:12px 26px;
+    border-radius:8px;
+    font-size:0.95rem;
+  }
+  .btn-primary:hover{ background:var(--primary-hover); }
+  .btn-primary:disabled{
+    background:var(--line-strong); color:var(--text-soft); cursor:not-allowed;
+  }
+  .hint{
+    font-size:0.78rem;
+    color:var(--text-soft);
+    margin-top:10px;
+  }
+
+  #game{ display:none; }
+  .turn-banner{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom: 16px;
+    flex-wrap:wrap;
+    gap:6px;
+  }
+  .turn-banner .who{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:1.3rem;
+    font-weight:600;
+    color:var(--primary);
+  }
+  .turn-banner .round{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:0.78rem;
+    color:var(--text-soft);
+  }
+
+  .dice-tray{
+    display:flex;
+    gap:10px;
+    justify-content:center;
+    margin: 10px 0 20px;
+    flex-wrap:wrap;
+  }
+  .die{
+    width:52px;height:52px;
+    background: var(--surface-2);
+    border:1.5px solid var(--line-strong);
+    border-radius:12px;
+    display:grid;
+    grid-template-columns: repeat(3,1fr);
+    grid-template-rows: repeat(3,1fr);
+    padding:8px;
+    cursor:pointer;
+    transition: transform .12s ease, border-color .12s ease;
+    position:relative;
+  }
+  .die.rolling{ animation: shake .35s ease; }
+  @keyframes shake{
+    0%{ transform:rotate(0deg); } 25%{ transform:rotate(-8deg);}
+    50%{ transform:rotate(6deg);} 75%{ transform:rotate(-4deg);} 100%{ transform:rotate(0deg);}
+  }
+  .die:hover{ transform: translateY(-2px); }
+  .die .pip{
+    width:8px;height:8px;border-radius:50%;
+    background: var(--text);
+    align-self:center;justify-self:center;
+    visibility:hidden;
+  }
+  .die.held{
+    border-color: var(--coral);
+    background: rgba(255,122,102,0.12);
+  }
+  .die.held .pip{ background: var(--coral); }
+  .die.held::after{
+    content:"✓";
+    position:absolute;
+    top:-7px; right:-7px;
+    width:18px; height:18px;
+    border-radius:50%;
+    background: var(--coral);
+    color:#1a0e0b;
+    font-size:0.65rem;
+    font-weight:700;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    line-height:1;
+  }
+  .die.disabled{ cursor:default; opacity:0.45; }
+
+  .roll-area{
+    text-align:center;
+    margin-bottom: 28px;
+  }
+  .rolls-left{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:0.78rem;
+    color:var(--text-soft);
+    margin-top:10px;
+  }
+
+  table.scoresheet{
+    width:100%;
+    border-collapse:collapse;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:0.82rem;
+    background: var(--surface);
+    border:1px solid var(--line);
+    border-radius:12px;
+    overflow:hidden;
+  }
+  table.scoresheet th, table.scoresheet td{
+    border-bottom:1px solid var(--line);
+    padding:8px 6px;
+    text-align:center;
+  }
+  table.scoresheet thead th{
+    border-bottom:1px solid var(--line-strong);
+    color:var(--text-soft);
+    font-weight:600;
+    padding:12px 6px;
+    position:sticky;
+    top:0;
+    background: var(--surface-2);
+  }
+  table.scoresheet .cat-name{
+    text-align:left;
+    color:var(--text);
+    white-space:nowrap;
+    padding-left:12px;
+  }
+  table.scoresheet tbody tr.section-head td{
+    border-top:2px solid var(--primary);
+    border-bottom:none;
+    padding-top:12px;
+    padding-bottom:0;
+    height:0;
+  }
+  td.score-cell{
+    cursor:default;
+    min-width:56px;
+    color: var(--text);
+  }
+  td.score-cell.filled{
+    font-weight:700;
+  }
+  td.score-cell.open{
+    cursor:pointer;
+    color: var(--green);
+    font-weight:600;
+  }
+  td.score-cell.open:hover{
+    background: var(--green-bg);
+  }
+  td.score-cell.open .take-score{
+    color: var(--green);
+  }
+  td.score-cell.open .take-score:hover{
+    text-decoration: underline;
+  }
+  td.score-cell.current-col{
+    background: rgba(124,107,240,0.06);
+  }
+  .cell-inner{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:5px;
+  }
+  .take-score{
+    cursor:pointer;
+    padding:2px 4px;
+  }
+  .strike-btn{
+    background:none;
+    border:none;
+    color:var(--text-soft);
+    font-size:0.72rem;
+    cursor:pointer;
+    padding:1px 3px;
+    line-height:1;
+    font-family:'IBM Plex Mono', monospace;
+  }
+  .strike-btn:hover{ color:var(--coral); }
+  .strike-mark{
+    width:28px;
+    height:15px;
+    display:inline-block;
+    vertical-align:middle;
+    overflow:visible;
+  }
+  .strike-mark line{
+    stroke: var(--text-soft);
+    stroke-width:2.2;
+    stroke-linecap:round;
+  }
+  td.score-cell.open .strike-mark line{ stroke: var(--green); }
+  .stamp{
+    display:inline-block;
+    animation: popIn .18s ease-out;
+  }
+  @keyframes popIn{
+    0%{ transform: scale(1.35); opacity:0; }
+    100%{ transform: scale(1); opacity:1; }
+  }
+  tr.subtotal-row td{
+    font-weight:700;
+    color:var(--text-soft);
+    background: rgba(255,255,255,0.02);
+  }
+  tr.total-row td{
+    border-top:2px solid var(--primary);
+    border-bottom:none;
+    font-weight:700;
+    padding-top:12px;
+    font-size:0.95rem;
+    color:var(--text);
+  }
+  tr.bonus-row td.cat-name{ color:var(--text-soft); }
+
+  .col-player-name{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:600;
+    font-size:0.95rem;
+    color:var(--text);
+  }
+
+  #gameover{ display:none; text-align:center; padding: 24px 0; }
+  #gameover h2{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:2rem;
+    font-weight:700;
+    color:var(--primary);
+    margin-bottom:4px;
+  }
+  .final-list{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:0.95rem;
+    margin: 16px 0 22px;
+  }
+  .final-list div{ padding:5px 0; }
+  .final-list .win{ color:var(--green); font-weight:700; }
+
+  footer.note{
+    text-align:center;
+    font-size:0.72rem;
+    color:var(--text-soft);
+    margin-top:26px;
+  }
+
+  @media (max-width:480px){
+    h1{ font-size:2rem; }
+    .die{ width:38px;height:38px; }
+    table.scoresheet{ font-size:0.68rem; }
+  }
+</style>
+</head>
+<body>
+<div class="sheet">
+  <button class="btn-ghost back-btn" id="backToMenuBtn" type="button" style="display:none;">← Menü</button>
+  <header class="title-block">
+    <h1>Rüffel</h1>
+    <div class="subtitle">der Spielzettel · Hotseat-Runde · 7 Würfel</div>
+  </header>
+
+  <section id="setup">
+    <div class="mode-tabs" id="modeTabs">
+      <button class="mode-tab active" data-mode="hotseat" type="button">📱 Ein Gerät</button>
+      <button class="mode-tab" data-mode="create" type="button">🌐 Raum erstellen</button>
+      <button class="mode-tab" data-mode="join" type="button">🔑 Raum beitreten</button>
+    </div>
+
+    <div class="setup-card" id="hotseatPanel">
+      <h2>Wer spielt mit?</h2>
+      <div id="playerRows"></div>
+      <div class="row-actions">
+        <button class="btn-ghost" id="addPlayerBtn" type="button">+ Spieler hinzufügen</button>
+        <button class="btn-primary" id="startBtn" type="button">Spiel starten</button>
+      </div>
+      <div class="hint">Mindestens 1 Spieler – auch solo spielbar. Aktiviere 🤖 bei einer Zeile, um gegen den Computer zu spielen.</div>
+    </div>
+
+    <div class="setup-card" id="createPanel" style="display:none;">
+      <h2>Neuen Online-Raum erstellen</h2>
+      <div class="field-row">
+        <input type="text" id="createNameInput" maxlength="18" placeholder="Dein Name">
+      </div>
+      <div class="row-actions">
+        <button class="btn-primary" id="createRoomBtn" type="button">Raum erstellen</button>
+      </div>
+      <div class="hint" id="createHint">Du bekommst einen Code, den du mit den anderen teilst. Ihr spielt dann live auf euren eigenen Geräten.</div>
+    </div>
+
+    <div class="setup-card" id="joinPanel" style="display:none;">
+      <h2>Bestehendem Raum beitreten</h2>
+      <div class="field-row">
+        <input type="text" id="joinNameInput" maxlength="18" placeholder="Dein Name">
+      </div>
+      <div class="field-row">
+        <input type="text" id="joinCodeInput" maxlength="4" placeholder="Raum-Code (z.B. AB3K)" style="text-transform:uppercase;">
+      </div>
+      <div class="row-actions">
+        <button class="btn-primary" id="joinRoomBtn" type="button">Beitreten</button>
+      </div>
+      <div class="hint" id="joinHint">Frag die Person, die den Raum erstellt hat, nach dem 4-stelligen Code.</div>
+    </div>
+  </section>
+
+  <section id="lobby" style="display:none;">
+    <div class="setup-card">
+      <h2>Warteraum</h2>
+      <div class="hint">Raum-Code zum Teilen:</div>
+      <div class="room-code" id="roomCodeDisplay"></div>
+      <div id="lobbyPlayerList" class="lobby-list"></div>
+      <div class="row-actions" id="hostControls" style="display:none;">
+        <button class="btn-ghost" id="addBotLobbyBtn" type="button">+ Bot hinzufügen</button>
+        <button class="btn-primary" id="startOnlineGameBtn" type="button">Spiel starten</button>
+      </div>
+      <div class="hint" id="guestWaitHint" style="display:none;">Warte, bis der Ersteller des Raums das Spiel startet …</div>
+    </div>
+  </section>
+
+  <section id="game">
+    <div class="turn-banner">
+      <div><span class="who" id="currentPlayerName"></span> ist dran</div>
+      <div style="display:flex; align-items:center; gap:12px;">
+        <button class="btn-ghost" id="undoBtn" type="button" title="Letzte Eintragung rückgängig machen">↺ Rückgängig</button>
+        <div class="round" id="roundInfo"></div>
+      </div>
+    </div>
+
+    <div class="dice-tray" id="diceTray"></div>
+    <div class="roll-area">
+      <button class="btn-primary" id="rollBtn" type="button">Würfeln</button>
+      <div class="rolls-left" id="rollsLeftLabel"></div>
+    </div>
+
+    <table class="scoresheet" id="scoresheet">
+      <thead><tr id="headRow"><th class="cat-name">Kategorie</th></tr></thead>
+      <tbody id="sheetBody"></tbody>
+    </table>
+  </section>
+
+  <section id="gameover">
+    <h2>Spiel beendet!</h2>
+    <div class="final-list" id="finalList"></div>
+    <button class="btn-ghost" id="restartBtn" type="button">Neue Runde starten</button>
+  </section>
+
+  <footer class="note">26 Kategorien pro Spieler · Bonus ab 80 Punkten im oberen Bereich: +20 · Felder können jederzeit gestrichen (✕ = 0 Punkte) werden</footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  const NUM_DICE = 7;
+
+  // ---------- Category definitions ----------
+  const UPPER = [
+    {key:'einser', label:'Alle Einser zählen', n:1},
+    {key:'zweier', label:'Alle Zweier zählen', n:2},
+    {key:'dreier', label:'Alle Dreier zählen', n:3},
+    {key:'vierer', label:'Alle Vierer zählen', n:4},
+    {key:'fuenfer', label:'Alle Fünfer zählen', n:5},
+    {key:'sechser', label:'Alle Sechser zählen', n:6},
+  ];
+  const LOWER = [
+    {key:'dreierpasch', label:'3-Pasch, alle Augen zählen'},
+    {key:'viererpasch', label:'4-Pasch, alle Augen zählen'},
+    {key:'fuenferpasch', label:'5-Pasch, alle Augen zählen'},
+    {key:'sechserpasch', label:'6-Pasch, alle Augen zählen'},
+    {key:'dreiundvier', label:'3+4 gleiche'},
+    {key:'sechsundeins', label:'6 Gleiche und 1'},
+    {key:'fuenfundzwei', label:'5+2 Gleiche'},
+    {key:'rueffel', label:'Rüffel'},
+    {key:'ganzkleinestrasse', label:'Ganz kleine Straße'},
+    {key:'kleinestrasse', label:'Kleine Straße'},
+    {key:'grossestrasse', label:'Große Straße'},
+    {key:'allee', label:'Allee'},
+    {key:'ecke', label:'Ecke'},
+    {key:'kleineecke', label:'Kleine Ecke'},
+    {key:'villa', label:'Villa mit Garage'},
+    {key:'mehrfamilienhaus', label:'Mehrfamilienhaus'},
+    {key:'bungalow', label:'Bungalow'},
+    {key:'chance1', label:'1. Chance'},
+    {key:'chance2', label:'2. Chance'},
+    {key:'chance3', label:'3. Chance'},
+  ];
+  const ALL_KEYS = UPPER.map(c=>c.key).concat(LOWER.map(c=>c.key));
+
+  function counts(dice){
+    const c = {1:0,2:0,3:0,4:0,5:0,6:0};
+    dice.forEach(d=> c[d]++ );
+    return c;
+  }
+  function sum(dice){ return dice.reduce((a,b)=>a+b,0); }
+  function distinctCountsSorted(c){
+    return Object.values(c).filter(v=>v>0).sort((a,b)=>a-b);
+  }
+  function arraysEqual(a,b){
+    return a.length===b.length && a.every((v,i)=>v===b[i]);
+  }
+
+  function hasConsecutiveRun(c, length){
+    for(let a=1; a<=6-length+1; a++){
+      let ok = true;
+      for(let v=a; v<a+length; v++){ if(c[v]<=0){ ok=false; break; } }
+      if(ok) return true;
+    }
+    return false;
+  }
+
+  function checkEcke(c){
+    for(let a=1; a<=3; a++){
+      // pattern: a=1x, a+1,a+2,a+3 = 2x each
+      if(c[a]===1 && c[a+1]===2 && c[a+2]===2 && c[a+3]===2) return true;
+      // mirrored: a,a+1,a+2 = 2x each, a+3=1x
+      if(c[a]===2 && c[a+1]===2 && c[a+2]===2 && c[a+3]===1) return true;
+    }
+    return false;
+  }
+  function checkKleineEcke(c){
+    for(let a=1; a<=4; a++){
+      if(c[a]>=2 && c[a+1]>=2 && c[a+2]>=2) return true;
+    }
+    return false;
+  }
+
+  function scoreFor(key, dice){
+    const c = counts(dice);
+    const upperDef = UPPER.find(u=>u.key===key);
+    if(upperDef) return c[upperDef.n]*upperDef.n;
+
+    const maxCount = Math.max(...Object.values(c));
+    const dc = distinctCountsSorted(c);
+
+    switch(key){
+      case 'dreierpasch': return maxCount>=3 ? sum(dice) : 0;
+      case 'viererpasch': return maxCount>=4 ? sum(dice) : 0;
+      case 'fuenferpasch': return maxCount>=5 ? sum(dice) : 0;
+      case 'sechserpasch': return maxCount>=6 ? sum(dice) : 0;
+      case 'dreiundvier': return arraysEqual(dc,[3,4]) ? 30 : 0;
+      case 'sechsundeins': return arraysEqual(dc,[1,6]) ? 55 : 0;
+      case 'fuenfundzwei': return arraysEqual(dc,[2,5]) ? 45 : 0;
+      case 'rueffel': return arraysEqual(dc,[7]) ? 100 : 0;
+      case 'ganzkleinestrasse': return hasConsecutiveRun(c,3) ? 25 : 0;
+      case 'kleinestrasse': return hasConsecutiveRun(c,4) ? 35 : 0;
+      case 'grossestrasse': return hasConsecutiveRun(c,5) ? 50 : 0;
+      case 'allee': return hasConsecutiveRun(c,6) ? 75 : 0;
+      case 'ecke': return checkEcke(c) ? 60 : 0;
+      case 'kleineecke': return checkKleineEcke(c) ? 30 : 0;
+      case 'villa': return arraysEqual(dc,[2,2,3]) ? 45 : 0;
+      case 'mehrfamilienhaus': return arraysEqual(dc,[1,2,2,2]) ? 40 : 0;
+      case 'bungalow': return arraysEqual(dc,[1,3,3]) ? 50 : 0;
+      case 'chance1': return sum(dice);
+      case 'chance2': return Math.max(0, sum(dice) - 10);
+      case 'chance3': return Math.max(0, sum(dice) - 15);
+      default: return 0;
+    }
+  }
+
+  // ---------- State ----------
+  let players = []; // {name, scores:{key:null|number}}
+  let currentPlayerIndex = 0;
+  let dice = new Array(NUM_DICE).fill(1);
+  let held = new Array(NUM_DICE).fill(false);
+  let rollsLeft = 3;
+  let hasRolledThisTurn = false;
+  let gameActive = false;
+
+  // ---------- Online multiplayer state ----------
+  function getClientId(){
+    let id = localStorage.getItem('rueffel_client_id');
+    if(!id){
+      id = 'c-' + Math.random().toString(36).slice(2,10) + Date.now().toString(36);
+      localStorage.setItem('rueffel_client_id', id);
+    }
+    return id;
+  }
+  const myClientId = getClientId();
+  let onlineMode = false;
+  let roomCode = null;
+  let hostId = null;
+  let unsubscribeRoom = null;
+  let botKickoffScheduled = false;
+
+  function isMyTurnOnline(){
+    return onlineMode && players[currentPlayerIndex] && players[currentPlayerIndex].clientId === myClientId;
+  }
+  function iAmHost(){
+    return onlineMode && hostId === myClientId;
+  }
+
+  // ---------- Mode tabs ----------
+  const modeTabs = document.getElementById('modeTabs');
+  const hotseatPanel = document.getElementById('hotseatPanel');
+  const createPanel = document.getElementById('createPanel');
+  const joinPanel = document.getElementById('joinPanel');
+
+  modeTabs.querySelectorAll('.mode-tab').forEach(tab=>{
+    tab.addEventListener('click', ()=>{
+      modeTabs.querySelectorAll('.mode-tab').forEach(t=>t.classList.remove('active'));
+      tab.classList.add('active');
+      const mode = tab.dataset.mode;
+      hotseatPanel.style.display = mode === 'hotseat' ? 'block' : 'none';
+      createPanel.style.display = mode === 'create' ? 'block' : 'none';
+      joinPanel.style.display = mode === 'join' ? 'block' : 'none';
+    });
+  });
+
+  // ---------- Setup screen ----------
+  const playerRowsEl = document.getElementById('playerRows');
+  const addPlayerBtn = document.getElementById('addPlayerBtn');
+  const startBtn = document.getElementById('startBtn');
+  const backToMenuBtn = document.getElementById('backToMenuBtn');
+
+  function addPlayerRow(defaultName, isBot){
+    const row = document.createElement('div');
+    row.className = 'player-row';
+    row.innerHTML = `
+      <span class="num"></span>
+      <input type="text" maxlength="18" value="${defaultName||''}">
+      <label class="bot-toggle-label" title="Von Computer steuern lassen">
+        <input type="checkbox" class="bot-toggle" ${isBot ? 'checked' : ''}> 🤖
+      </label>
+      <button class="remove-btn" type="button" aria-label="Spieler entfernen">✕</button>
+    `;
+    row.querySelector('.remove-btn').addEventListener('click', ()=>{
+      if(playerRowsEl.querySelectorAll('.player-row').length <= 1) return;
+      row.remove();
+      renumberRows();
+    });
+    playerRowsEl.appendChild(row);
+    renumberRows();
+  }
+  function renumberRows(){
+    const rows = playerRowsEl.querySelectorAll('.player-row');
+    rows.forEach((r,i)=>{
+      const num = i+1;
+      r.querySelector('.num').textContent = num + '.';
+      const input = r.querySelector('input[type="text"]');
+      if(!input.value.trim()){
+        input.placeholder = 'Name Spieler ' + num;
+      }
+    });
+  }
+  addPlayerBtn.addEventListener('click', ()=> addPlayerRow());
+  addPlayerRow(); addPlayerRow();
+
+  startBtn.addEventListener('click', ()=>{
+    const rows = Array.from(playerRowsEl.querySelectorAll('.player-row'));
+    if(rows.length < 1){
+      alert('Bitte mindestens 1 Spieler eintragen.');
+      return;
+    }
+    players = rows.map((r,i)=>{
+      const val = r.querySelector('input[type="text"]').value.trim();
+      const isBot = r.querySelector('.bot-toggle').checked;
+      const name = val || (isBot ? ('Bot ' + (i+1)) : ('Spieler ' + (i+1)));
+      return {
+        name,
+        isBot,
+        scores: Object.fromEntries(ALL_KEYS.map(k=>[k,null]))
+      };
+    });
+    currentPlayerIndex = 0;
+    history = [];
+    gameActive = true;
+    document.getElementById('setup').style.display = 'none';
+    document.getElementById('game').style.display = 'block';
+    backToMenuBtn.style.display = 'inline-block';
+    buildSheet();
+    startTurn();
+  });
+
+  // ---------- Online: create / join / lobby ----------
+  const createNameInput = document.getElementById('createNameInput');
+  const createRoomBtn = document.getElementById('createRoomBtn');
+  const createHint = document.getElementById('createHint');
+  const joinNameInput = document.getElementById('joinNameInput');
+  const joinCodeInput = document.getElementById('joinCodeInput');
+  const joinRoomBtn = document.getElementById('joinRoomBtn');
+  const joinHint = document.getElementById('joinHint');
+  const lobbySection = document.getElementById('lobby');
+  const roomCodeDisplay = document.getElementById('roomCodeDisplay');
+  const lobbyPlayerList = document.getElementById('lobbyPlayerList');
+  const hostControls = document.getElementById('hostControls');
+  const guestWaitHint = document.getElementById('guestWaitHint');
+  const addBotLobbyBtn = document.getElementById('addBotLobbyBtn');
+  const startOnlineGameBtn = document.getElementById('startOnlineGameBtn');
+
+  function pushRoomState(patch){
+    if(!onlineMode || !roomCode || !window.RueffelSync) return;
+    window.RueffelSync.updateRoom(roomCode, patch).catch(err=>{
+      console.error('Sync-Fehler:', err);
+    });
+  }
+
+  function subscribeToRoom(code){
+    if(unsubscribeRoom){ unsubscribeRoom(); unsubscribeRoom = null; }
+    unsubscribeRoom = window.RueffelSync.subscribeRoom(code, (room)=>{
+      if(!room) return;
+      onRoomUpdate(room);
+    });
+  }
+
+  function normalizeIncomingPlayers(rawPlayers){
+    return (rawPlayers || []).map(p=>{
+      const scores = {};
+      ALL_KEYS.forEach(k=>{ scores[k] = (p.scores && k in p.scores) ? p.scores[k] : null; });
+      return { name: p.name, isBot: !!p.isBot, clientId: p.clientId || null, scores };
+    });
+  }
+
+  function playersForSync(){
+    return players.map(p => ({ name: p.name, isBot: p.isBot, clientId: p.clientId || null, scores: p.scores }));
+  }
+
+  function onRoomUpdate(room){
+    hostId = room.hostId || null;
+    players = normalizeIncomingPlayers(room.players);
+
+    if(room.status === 'lobby'){
+      renderLobby();
+      return;
+    }
+
+    currentPlayerIndex = room.currentPlayerIndex || 0;
+    dice = (Array.isArray(room.dice) && room.dice.length === NUM_DICE) ? room.dice.slice() : new Array(NUM_DICE).fill(1);
+    held = (Array.isArray(room.held) && room.held.length === NUM_DICE) ? room.held.slice() : new Array(NUM_DICE).fill(false);
+    rollsLeft = (room.rollsLeft !== undefined) ? room.rollsLeft : 3;
+    hasRolledThisTurn = !!room.hasRolledThisTurn;
+
+    if(room.status === 'playing'){
+      gameActive = true;
+      const stillInSetup = document.getElementById('setup').style.display !== 'none' ||
+        lobbySection.style.display !== 'none';
+      if(stillInSetup){
+        document.getElementById('setup').style.display = 'none';
+        lobbySection.style.display = 'none';
+        document.getElementById('gameover').style.display = 'none';
+        document.getElementById('game').style.display = 'block';
+        backToMenuBtn.style.display = 'inline-block';
+        buildSheet();
+      }
+      renderFromRemote();
+    } else if(room.status === 'gameover'){
+      gameActive = false;
+      showGameOver();
+    }
+  }
+
+  function renderLobby(){
+    document.getElementById('setup').style.display = 'none';
+    lobbySection.style.display = 'block';
+    document.getElementById('game').style.display = 'none';
+    document.getElementById('gameover').style.display = 'none';
+    backToMenuBtn.style.display = 'inline-block';
+
+    roomCodeDisplay.textContent = roomCode || '';
+    lobbyPlayerList.innerHTML = players.map(p=>{
+      const tag = p.isBot ? '🤖 Bot' : (p.clientId === myClientId ? '👤 Du' : '👤 Mitspieler');
+      return `<div class="lobby-player"><span>${escapeHtml(p.name)}</span><span class="tag">${tag}</span></div>`;
+    }).join('');
+
+    if(iAmHost()){
+      hostControls.style.display = 'flex';
+      guestWaitHint.style.display = 'none';
+    } else {
+      hostControls.style.display = 'none';
+      guestWaitHint.style.display = 'block';
+    }
+  }
+
+  createRoomBtn.addEventListener('click', async ()=>{
+    const name = createNameInput.value.trim() || 'Spieler 1';
+    createRoomBtn.disabled = true;
+    createHint.textContent = 'Raum wird erstellt …';
+    try{
+      const initialPlayers = [{ name, isBot:false, clientId: myClientId, scores: Object.fromEntries(ALL_KEYS.map(k=>[k,null])) }];
+      const code = await window.RueffelSync.createRoom({
+        hostId: myClientId,
+        status: 'lobby',
+        players: initialPlayers,
+        currentPlayerIndex: 0,
+        dice: new Array(NUM_DICE).fill(1),
+        held: new Array(NUM_DICE).fill(false),
+        rollsLeft: 3,
+        hasRolledThisTurn: false
+      });
+      roomCode = code;
+      hostId = myClientId;
+      onlineMode = true;
+      players = initialPlayers;
+      subscribeToRoom(code);
+    } catch(err){
+      createHint.textContent = 'Fehler: ' + err.message;
+      createRoomBtn.disabled = false;
+    }
+  });
+
+  joinRoomBtn.addEventListener('click', async ()=>{
+    const name = joinNameInput.value.trim() || 'Mitspieler';
+    const code = joinCodeInput.value.trim().toUpperCase();
+    if(!code){
+      joinHint.textContent = 'Bitte einen Raum-Code eingeben.';
+      return;
+    }
+    joinRoomBtn.disabled = true;
+    joinHint.textContent = 'Trete Raum bei …';
+    try{
+      const newPlayer = { name, isBot:false, clientId: myClientId, scores: Object.fromEntries(ALL_KEYS.map(k=>[k,null])) };
+      const result = await window.RueffelSync.joinRoomAddPlayer(code, newPlayer);
+      roomCode = code;
+      hostId = result.hostId;
+      onlineMode = true;
+      subscribeToRoom(code);
+    } catch(err){
+      joinHint.textContent = 'Fehler: ' + err.message;
+      joinRoomBtn.disabled = false;
+    }
+  });
+
+  addBotLobbyBtn.addEventListener('click', ()=>{
+    if(!iAmHost()) return;
+    const botCount = players.filter(p=>p.isBot).length + 1;
+    const botPlayer = { name: 'Bot ' + botCount, isBot:true, clientId:null, scores: Object.fromEntries(ALL_KEYS.map(k=>[k,null])) };
+    const updatedPlayers = playersForSync().concat([botPlayer]);
+    pushRoomState({ players: updatedPlayers });
+  });
+
+  startOnlineGameBtn.addEventListener('click', ()=>{
+    if(!iAmHost()) return;
+    if(players.length < 1) return;
+    currentPlayerIndex = 0;
+    history = [];
+    gameActive = true;
+    lobbySection.style.display = 'none';
+    document.getElementById('game').style.display = 'block';
+    buildSheet();
+    startTurn();
+  });
+
+  // ---------- Dice UI ----------
+  const diceTray = document.getElementById('diceTray');
+  const rollBtn = document.getElementById('rollBtn');
+  const rollsLeftLabel = document.getElementById('rollsLeftLabel');
+
+  const PIP_LAYOUTS = {
+    1:[4],
+    2:[0,8],
+    3:[0,4,8],
+    4:[0,2,6,8],
+    5:[0,2,4,6,8],
+    6:[0,2,3,5,6,8]
+  };
+
+  function renderDice(){
+    diceTray.innerHTML = '';
+    const interactive = hasRolledThisTurn && (!onlineMode || isMyTurnOnline());
+    dice.forEach((val, i)=>{
+      const d = document.createElement('div');
+      d.className = 'die' + (held[i] ? ' held' : '') + (interactive ? '' : ' disabled');
+      for(let p=0;p<9;p++){
+        const pip = document.createElement('div');
+        pip.className = 'pip';
+        if(PIP_LAYOUTS[val].includes(p)) pip.style.visibility = 'visible';
+        d.appendChild(pip);
+      }
+      d.addEventListener('click', ()=>{
+        if(!hasRolledThisTurn) return;
+        if(players[currentPlayerIndex] && players[currentPlayerIndex].isBot) return;
+        if(onlineMode && !isMyTurnOnline()) return;
+        held[i] = !held[i];
+        renderDice();
+        if(onlineMode) pushRoomState({ held });
+      });
+      diceTray.appendChild(d);
+    });
+  }
+
+  function performRoll(){
+    if(rollsLeft <= 0) return;
+    dice = dice.map((v,i)=> held[i] ? v : (1 + Math.floor(Math.random()*6)) );
+    rollsLeft -= 1;
+    hasRolledThisTurn = true;
+    updateRollUI();
+    renderDice();
+    Array.from(diceTray.children).forEach((el,i)=>{
+      if(!held[i]){ el.classList.add('rolling'); setTimeout(()=>el.classList.remove('rolling'), 350); }
+    });
+    renderSheetValues();
+    if(onlineMode) pushRoomState({ dice, rollsLeft, hasRolledThisTurn });
+  }
+
+  rollBtn.addEventListener('click', ()=>{
+    if(players[currentPlayerIndex] && players[currentPlayerIndex].isBot) return;
+    if(onlineMode && !isMyTurnOnline()) return;
+    performRoll();
+  });
+
+  function updateRollUI(){
+    if(onlineMode && !isMyTurnOnline()){
+      rollBtn.disabled = true;
+      const active = players[currentPlayerIndex];
+      if(!active){
+        rollsLeftLabel.textContent = '';
+      } else if(active.isBot){
+        rollsLeftLabel.textContent = 'Der Bot ist am Zug …';
+      } else if(hasRolledThisTurn){
+        rollsLeftLabel.textContent = `${active.name} ist dran – noch ${rollsLeft} ${rollsLeft===1?'Wurf':'Würfe'} übrig`;
+      } else {
+        rollsLeftLabel.textContent = `Warte, bis ${active.name} würfelt …`;
+      }
+      return;
+    }
+    rollBtn.disabled = rollsLeft <= 0;
+    rollsLeftLabel.textContent = hasRolledThisTurn
+      ? (rollsLeft > 0 ? `Noch ${rollsLeft} ${rollsLeft===1?'Wurf':'Würfe'} übrig – Würfel antippen zum Halten` : 'Keine Würfe mehr – jetzt eine Kategorie eintragen oder streichen')
+      : 'Erster Wurf der Runde';
+  }
+
+  // ---------- Score sheet ----------
+  const headRow = document.getElementById('headRow');
+  const sheetBody = document.getElementById('sheetBody');
+
+  function buildSheet(){
+    headRow.innerHTML = '<th class="cat-name">Kategorie</th>' +
+      players.map(p=>`<th class="col-player-name">${escapeHtml(p.name)}</th>`).join('');
+
+    let rows = '';
+    UPPER.forEach(c=>{ rows += rowHtml(c.key, c.label); });
+    rows += `<tr class="subtotal-row"><td class="cat-name">Insgesamt</td>` +
+      players.map((p,pi)=>`<td class="score-cell" data-upper-total-for="${pi}"></td>`).join('') + `</tr>`;
+    rows += `<tr class="bonus-row"><td class="cat-name">Plus 20 Punkte Bonus</td>` +
+      players.map((p,pi)=>`<td class="score-cell" data-bonus-for="${pi}"></td>`).join('') + `</tr>`;
+    rows += `<tr class="subtotal-row"><td class="cat-name">Insgesamt I</td>` +
+      players.map((p,pi)=>`<td class="score-cell" data-insgesamt1-for="${pi}"></td>`).join('') + `</tr>`;
+
+    rows += `<tr class="section-head"><td colspan="${players.length+1}"></td></tr>`;
+    LOWER.forEach(c=>{ rows += rowHtml(c.key, c.label); });
+    rows += `<tr class="section-head"><td colspan="${players.length+1}"></td></tr>`;
+    rows += `<tr class="subtotal-row"><td class="cat-name">Insgesamt II</td>` +
+      players.map((p,pi)=>`<td class="score-cell" data-lower-total-for="${pi}"></td>`).join('') + `</tr>`;
+    rows += `<tr class="subtotal-row"><td class="cat-name">Summe von I</td>` +
+      players.map((p,pi)=>`<td class="score-cell" data-summevon1-for="${pi}"></td>`).join('') + `</tr>`;
+    rows += `<tr class="total-row"><td class="cat-name">Total</td>` +
+      players.map((p,pi)=>`<td class="score-cell" data-total-for="${pi}"></td>`).join('') + `</tr>`;
+
+    sheetBody.innerHTML = rows;
+
+    ALL_KEYS.forEach(key=>{
+      players.forEach((p,pi)=>{
+        const cell = sheetBody.querySelector(`td[data-key="${key}"][data-player="${pi}"]`);
+        cell.addEventListener('click', (e)=>{
+          if(e.target.closest('.strike-btn')) return; // handled separately
+          if(players[currentPlayerIndex] && players[currentPlayerIndex].isBot) return;
+          onCellClick(key, pi, false);
+        });
+        cell.setAttribute('tabindex','0');
+        cell.addEventListener('keydown', (e)=>{
+          if(players[currentPlayerIndex] && players[currentPlayerIndex].isBot) return;
+          if(e.key==='Enter' || e.key===' '){ e.preventDefault(); onCellClick(key, pi, false); }
+        });
+      });
+    });
+    renderSheetValues();
+  }
+
+  function rowHtml(key, label){
+    return `<tr>
+      <td class="cat-name">${label}</td>
+      ${players.map((p,pi)=>`<td class="score-cell" data-key="${key}" data-player="${pi}"></td>`).join('')}
+    </tr>`;
+  }
+
+  function escapeHtml(s){
+    return s.replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function onCellClick(key, playerIndex, forceZero){
+    if(playerIndex !== currentPlayerIndex) return;
+    if(!hasRolledThisTurn) return;
+    const player = players[playerIndex];
+    if(player.scores[key] !== null) return;
+    if(onlineMode){
+      if(player.isBot){
+        if(!iAmHost()) return;
+      } else if(player.clientId !== myClientId){
+        return;
+      }
+    }
+    if(!player.isBot){
+      pushHistory();
+    }
+    const value = forceZero ? 0 : scoreFor(key, dice);
+    player.scores[key] = value;
+    nextTurnOrEnd();
+  }
+
+  function upperSum(player){
+    return UPPER.reduce((acc,c)=> acc + (player.scores[c.key] || 0), 0);
+  }
+  function bonus20(player){
+    return upperSum(player) >= 80 ? 20 : 0;
+  }
+  function insgesamt1(player){
+    return upperSum(player) + bonus20(player);
+  }
+  function lowerSum(player){
+    return LOWER.reduce((acc,c)=> acc + (player.scores[c.key] || 0), 0);
+  }
+  function totalScore(player){
+    return lowerSum(player) + insgesamt1(player);
+  }
+  function categoriesFilled(player){
+    return ALL_KEYS.every(k => player.scores[k] !== null);
+  }
+  function upperFilled(player){
+    return UPPER.every(c => player.scores[c.key] !== null);
+  }
+  function allFilled(player){
+    return ALL_KEYS.every(k => player.scores[k] !== null);
+  }
+
+  function strikeMarkHTML(){
+    return '<svg class="strike-mark" viewBox="0 0 40 20" aria-hidden="true"><line x1="7" y1="16" x2="33" y2="4"/></svg>';
+  }
+
+  function renderSheetValues(){
+    players.forEach((p,pi)=>{
+      ALL_KEYS.forEach(key=>{
+        const cell = sheetBody.querySelector(`td[data-key="${key}"][data-player="${pi}"]`);
+        const filled = p.scores[key] !== null;
+        cell.classList.toggle('current-col', pi===currentPlayerIndex);
+        if(filled){
+          const val = p.scores[key];
+          cell.innerHTML = val === 0 ? strikeMarkHTML() : String(val);
+          cell.classList.add('filled');
+          cell.classList.remove('open');
+        } else if(pi === currentPlayerIndex && hasRolledThisTurn && !p.isBot && (!onlineMode || isMyTurnOnline())){
+          const potential = scoreFor(key, dice);
+          const takeContent = potential === 0
+            ? `<span class="take-score stamp">${strikeMarkHTML()}</span>`
+            : `<span class="take-score stamp">${potential}</span>`;
+          cell.innerHTML = `<span class="cell-inner">${takeContent}<button type="button" class="strike-btn" title="Streichen (0 Punkte)">✕</button></span>`;
+          cell.classList.add('open');
+          cell.classList.remove('filled');
+          const strikeBtn = cell.querySelector('.strike-btn');
+          strikeBtn.addEventListener('click', (e)=>{
+            e.stopPropagation();
+            onCellClick(key, pi, true);
+          });
+        } else {
+          cell.textContent = '–';
+          cell.classList.remove('open','filled');
+        }
+      });
+
+      const upperTotalCell = sheetBody.querySelector(`td[data-upper-total-for="${pi}"]`);
+      upperTotalCell.textContent = upperSum(p);
+      upperTotalCell.classList.toggle('current-col', pi===currentPlayerIndex);
+
+      const bonusCell = sheetBody.querySelector(`td[data-bonus-for="${pi}"]`);
+      bonusCell.textContent = upperFilled(p) || upperSum(p) >= 80 ? bonus20(p) : '–';
+      bonusCell.classList.toggle('current-col', pi===currentPlayerIndex);
+
+      const insgesamt1Cell = sheetBody.querySelector(`td[data-insgesamt1-for="${pi}"]`);
+      insgesamt1Cell.textContent = insgesamt1(p);
+      insgesamt1Cell.classList.toggle('current-col', pi===currentPlayerIndex);
+
+      const lowerTotalCell = sheetBody.querySelector(`td[data-lower-total-for="${pi}"]`);
+      lowerTotalCell.textContent = lowerSum(p);
+      lowerTotalCell.classList.toggle('current-col', pi===currentPlayerIndex);
+
+      const summeVon1Cell = sheetBody.querySelector(`td[data-summevon1-for="${pi}"]`);
+      summeVon1Cell.textContent = insgesamt1(p);
+      summeVon1Cell.classList.toggle('current-col', pi===currentPlayerIndex);
+
+      const totalCell = sheetBody.querySelector(`td[data-total-for="${pi}"]`);
+      totalCell.textContent = totalScore(p);
+      totalCell.classList.toggle('current-col', pi===currentPlayerIndex);
+    });
+  }
+
+  // ---------- Turn flow ----------
+  const currentPlayerNameEl = document.getElementById('currentPlayerName');
+  const roundInfoEl = document.getElementById('roundInfo');
+
+  function startTurn(){
+    botKickoffScheduled = false;
+    dice = new Array(NUM_DICE).fill(1);
+    held = new Array(NUM_DICE).fill(false);
+    rollsLeft = 3;
+    hasRolledThisTurn = false;
+    const player = players[currentPlayerIndex];
+    currentPlayerNameEl.textContent = player.name + (player.isBot ? ' 🤖' : '');
+    const filledCount = ALL_KEYS.length - ALL_KEYS.filter(k=>player.scores[k]===null).length;
+    const round = Math.min(filledCount + 1, ALL_KEYS.length);
+    roundInfoEl.textContent = `Runde ${round} von ${ALL_KEYS.length}`;
+    updateRollUI();
+    renderDice();
+    renderSheetValues();
+    updateUndoButton();
+    if(onlineMode){
+      pushRoomState({
+        players: playersForSync(),
+        currentPlayerIndex,
+        dice, held, rollsLeft, hasRolledThisTurn,
+        status: 'playing'
+      });
+    }
+    maybeKickOffBot();
+  }
+
+  function maybeKickOffBot(){
+    const player = players[currentPlayerIndex];
+    if(!player || !player.isBot) return;
+    if(onlineMode && !iAmHost()) return;
+    if(rollsLeft !== 3 || hasRolledThisTurn) return;
+    if(botKickoffScheduled) return;
+    botKickoffScheduled = true;
+    rollBtn.disabled = true;
+    rollsLeftLabel.textContent = 'Der Bot würfelt …';
+    setTimeout(botRollStep, 600);
+  }
+
+  function renderFromRemote(){
+    const player = players[currentPlayerIndex];
+    if(!player) return;
+    currentPlayerNameEl.textContent = player.name + (player.isBot ? ' 🤖' : '');
+    const filledCount = ALL_KEYS.length - ALL_KEYS.filter(k=>player.scores[k]===null).length;
+    const round = Math.min(filledCount + 1, ALL_KEYS.length);
+    roundInfoEl.textContent = `Runde ${round} von ${ALL_KEYS.length}`;
+    updateRollUI();
+    renderDice();
+    renderSheetValues();
+    updateUndoButton();
+    maybeKickOffBot();
+  }
+
+  // ---------- Undo / History ----------
+  const undoBtn = document.getElementById('undoBtn');
+  let history = [];
+
+  function snapshotState(){
+    return {
+      currentPlayerIndex,
+      dice: dice.slice(),
+      held: held.slice(),
+      rollsLeft,
+      hasRolledThisTurn,
+      scores: players.map(p => Object.assign({}, p.scores))
+    };
+  }
+
+  function pushHistory(){
+    history.push(snapshotState());
+    updateUndoButton();
+  }
+
+  function updateUndoButton(){
+    if(!undoBtn) return;
+    const currentIsBot = players[currentPlayerIndex] && players[currentPlayerIndex].isBot;
+    const botInProgress = currentIsBot && hasRolledThisTurn;
+    undoBtn.disabled = history.length === 0 || botInProgress;
+  }
+
+  function undoLastMove(){
+    if(history.length === 0) return;
+    const snap = history.pop();
+    currentPlayerIndex = snap.currentPlayerIndex;
+    dice = snap.dice.slice();
+    held = snap.held.slice();
+    rollsLeft = snap.rollsLeft;
+    hasRolledThisTurn = snap.hasRolledThisTurn;
+    players.forEach((p,i)=>{ p.scores = Object.assign({}, snap.scores[i]); });
+
+    document.getElementById('gameover').style.display = 'none';
+    document.getElementById('game').style.display = 'block';
+    gameActive = true;
+
+    const player = players[currentPlayerIndex];
+    currentPlayerNameEl.textContent = player.name + (player.isBot ? ' 🤖' : '');
+    const filledCount = ALL_KEYS.length - ALL_KEYS.filter(k=>player.scores[k]===null).length;
+    const round = Math.min(filledCount + 1, ALL_KEYS.length);
+    roundInfoEl.textContent = `Runde ${round} von ${ALL_KEYS.length}`;
+    updateRollUI();
+    renderDice();
+    renderSheetValues();
+    updateUndoButton();
+    if(onlineMode){
+      pushRoomState({
+        players: playersForSync(),
+        currentPlayerIndex, dice, held, rollsLeft, hasRolledThisTurn,
+        status: 'playing'
+      });
+    }
+  }
+
+  if(undoBtn){
+    undoBtn.addEventListener('click', undoLastMove);
+  }
+
+  // ---------- Bot logic ----------
+  function decideBotHolds(diceValues){
+    const c = counts(diceValues);
+    let bestVal = 0, bestCount = 0;
+    for(let v=1; v<=6; v++){
+      if(c[v] > bestCount || (c[v] === bestCount && v > bestVal)){
+        bestCount = c[v];
+        bestVal = v;
+      }
+    }
+    if(bestCount < 2) return diceValues.map(()=>false); // nothing worth keeping, reroll everything
+    return diceValues.map(d => d === bestVal);
+  }
+
+  function botRollStep(){
+    if(!gameActive) return;
+    if(onlineMode && !iAmHost()) return;
+    const currentPlayer = players[currentPlayerIndex];
+    if(!currentPlayer || !currentPlayer.isBot) return; // stale timer (e.g. after an undo), abort
+    performRoll();
+    setTimeout(()=>{
+      if(!gameActive) return;
+      if(rollsLeft > 0){
+        held = decideBotHolds(dice);
+        renderDice();
+        if(onlineMode) pushRoomState({ held });
+        setTimeout(botRollStep, 600);
+      } else {
+        setTimeout(botFinishTurn, 500);
+      }
+    }, 550);
+  }
+
+  function botFinishTurn(){
+    if(!gameActive) return;
+    if(onlineMode && !iAmHost()) return;
+    const player = players[currentPlayerIndex];
+    const openKeys = ALL_KEYS.filter(k => player.scores[k] === null);
+    let bestKey = openKeys[0];
+    let bestScore = -1;
+    openKeys.forEach(k=>{
+      const s = scoreFor(k, dice);
+      if(s > bestScore){ bestScore = s; bestKey = k; }
+    });
+    onCellClick(bestKey, currentPlayerIndex, false);
+  }
+
+  function nextTurnOrEnd(){
+    if(players.every(allFilled)){
+      showGameOver();
+      if(onlineMode){
+        pushRoomState({ players: playersForSync(), status: 'gameover' });
+      }
+      return;
+    }
+    let next = currentPlayerIndex;
+    do{
+      next = (next + 1) % players.length;
+    } while(allFilled(players[next]) && !players.every(allFilled));
+    currentPlayerIndex = next;
+    startTurn();
+  }
+
+  function showGameOver(){
+    gameActive = false;
+    document.getElementById('game').style.display = 'none';
+    const go = document.getElementById('gameover');
+    go.style.display = 'block';
+    const ranked = players.map(p=>({name:p.name, total: totalScore(p)}))
+      .sort((a,b)=> b.total - a.total);
+    const finalList = document.getElementById('finalList');
+    finalList.innerHTML = ranked.map((p,i)=>
+      `<div class="${i===0?'win':''}">${i+1}. ${escapeHtml(p.name)} — ${p.total} Punkte${i===0?' 🏆':''}</div>`
+    ).join('');
+  }
+
+  function goToMenu(){
+    const gameEl = document.getElementById('game');
+    const isMidGame = gameEl.style.display !== 'none';
+    if(isMidGame){
+      const ok = confirm('Zum Menü zurückkehren? Der aktuelle Spielstand geht verloren.');
+      if(!ok) return;
+    }
+    gameActive = false;
+    if(unsubscribeRoom){ unsubscribeRoom(); unsubscribeRoom = null; }
+    onlineMode = false;
+    roomCode = null;
+    hostId = null;
+    document.getElementById('game').style.display = 'none';
+    document.getElementById('gameover').style.display = 'none';
+    lobbySection.style.display = 'none';
+    document.getElementById('setup').style.display = 'block';
+    backToMenuBtn.style.display = 'none';
+
+    modeTabs.querySelectorAll('.mode-tab').forEach(t=>t.classList.remove('active'));
+    modeTabs.querySelector('[data-mode="hotseat"]').classList.add('active');
+    hotseatPanel.style.display = 'block';
+    createPanel.style.display = 'none';
+    joinPanel.style.display = 'none';
+    createRoomBtn.disabled = false;
+    joinRoomBtn.disabled = false;
+    createHint.textContent = 'Du bekommst einen Code, den du mit den anderen teilst. Ihr spielt dann live auf euren eigenen Geräten.';
+    joinHint.textContent = 'Frag die Person, die den Raum erstellt hat, nach dem 4-stelligen Code.';
+
+    playerRowsEl.innerHTML = '';
+    if(players.length > 0){
+      players.forEach(p=> addPlayerRow(p.name, p.isBot));
+    } else {
+      addPlayerRow(); addPlayerRow();
+    }
+  }
+  backToMenuBtn.addEventListener('click', goToMenu);
+
+  document.getElementById('restartBtn').addEventListener('click', goToMenu);
+
+})();
+</script>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+  import { getDatabase, ref, get, update, onValue, off, runTransaction } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBEaEYhet_s8GG7d5LfkBmXL3f9zLbGY4g",
+    authDomain: "rueffel.firebaseapp.com",
+    databaseURL: "https://rueffel-default-rtdb.firebaseio.com",
+    projectId: "rueffel",
+    storageBucket: "rueffel.firebasestorage.app",
+    messagingSenderId: "23299802061",
+    appId: "1:23299802061:web:15b8d7c94da7595980ba84"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  function randomCode(){
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    let s = "";
+    for(let i=0;i<4;i++) s += chars[Math.floor(Math.random()*chars.length)];
+    return s;
+  }
+
+  window.RueffelSync = {
+    async createRoom(roomData){
+      let code = null;
+      for(let attempt=0; attempt<6; attempt++){
+        const candidate = randomCode();
+        const snap = await get(ref(db, 'rooms/' + candidate));
+        if(!snap.exists()){ code = candidate; break; }
+      }
+      if(!code) throw new Error('Konnte keinen freien Raum-Code finden.');
+      await update(ref(db, 'rooms/' + code), roomData);
+      return code;
+    },
+
+    async joinRoomAddPlayer(code, player){
+      const statusSnap = await get(ref(db, 'rooms/' + code + '/status'));
+      if(!statusSnap.exists()) throw new Error('Raum nicht gefunden. Code prüfen.');
+      if(statusSnap.val() !== 'lobby') throw new Error('Diesem Raum kann man gerade nicht mehr beitreten.');
+      const hostSnap = await get(ref(db, 'rooms/' + code + '/hostId'));
+      const playersRef = ref(db, 'rooms/' + code + '/players');
+      await runTransaction(playersRef, (current)=>{
+        const list = current || [];
+        list.push(player);
+        return list;
+      });
+      return { hostId: hostSnap.val() };
+    },
+
+    async updateRoom(code, patch){
+      await update(ref(db, 'rooms/' + code), patch);
+    },
+
+    subscribeRoom(code, callback){
+      const roomRef = ref(db, 'rooms/' + code);
+      const handler = (snap)=>{ callback(snap.exists() ? snap.val() : null); };
+      onValue(roomRef, handler);
+      return () => off(roomRef, 'value', handler);
+    }
+  };
+</script>
+</body>
+</html>
