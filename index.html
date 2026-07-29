@@ -840,6 +840,9 @@
     .room-code{ font-size:1.7rem; letter-spacing:4px; }
     .dice-tray{ gap:6px; }
     .die{ width:36px;height:36px; }
+    .die-face, .cube-face{ padding:4px; border-radius:9px; }
+    .die .pip{ width:5px; height:5px; }
+    .die.held::after{ width:15px; height:15px; font-size:0.55rem; top:-6px; right:-6px; }
     .roll-counter{ gap:6px; }
     table.scoresheet{ font-size:0.64rem; transform:none; }
     table.scoresheet .cat-name{
@@ -863,6 +866,8 @@
   }
   @media (max-width:340px){
     .die{ width:30px;height:30px; }
+    .die-face, .cube-face{ padding:3px; }
+    .die .pip{ width:4px; height:4px; }
     h1{ font-size:1.7rem; }
   }
 </style>
